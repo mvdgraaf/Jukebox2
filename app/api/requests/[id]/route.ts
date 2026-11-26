@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/src/prisma/db';
 import { isDJ } from '@/src/dj-guard';
+import { requestsCache } from '@/src/request-cache';
 
 const requestsDB = db.orm.public.Request;
 
@@ -23,6 +24,7 @@ export async function PATCH(
             const updated = await requestsDB
                 .where({ id })
                 .update({ upvotes: current.upvotes + 1 });
+            requestsCache.invalidate();
             return NextResponse.json(updated);
         }
 
@@ -40,6 +42,7 @@ export async function PATCH(
                 return NextResponse.json({ error: 'Verzoek niet gevonden' }, { status: 404 });
             }
             const updated = await requestsDB.where({ id }).update({ status: body.status });
+            requestsCache.invalidate();
             return NextResponse.json(updated);
         }
 
@@ -61,6 +64,7 @@ export async function DELETE(
     try {
         const { id } = await params;
         await requestsDB.where({ id }).delete();
+        requestsCache.invalidate();
         return NextResponse.json({ success: true });
     } catch (error) {
         console.error(error);

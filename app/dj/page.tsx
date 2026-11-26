@@ -157,10 +157,41 @@ export default function DJDashboard() {
     };
 
     useEffect(() => {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
-        fetchRequests().then(r => r);
-        const interval = setInterval(fetchRequests, 4000);
-        return () => clearInterval(interval);
+        let active = true;
+        let polling = false;
+        let refreshOnResume = false;
+        const poll = async () => {
+            if (!active || document.visibilityState !== 'visible') return;
+            if (polling) return;
+
+            polling = true;
+            try {
+                await fetchRequests();
+            } finally {
+                polling = false;
+                if (active && refreshOnResume && document.visibilityState === 'visible') {
+                    refreshOnResume = false;
+                    void poll();
+                }
+            }
+        };
+        const handleVisibilityChange = () => {
+            if (document.visibilityState !== 'visible') return;
+            if (polling) {
+                refreshOnResume = true;
+            } else {
+                void poll();
+            }
+        };
+
+        void poll();
+        const interval = setInterval(() => void poll(), 4000);
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => {
+            active = false;
+            clearInterval(interval);
+            document.removeEventListener('visibilitychange', handleVisibilityChange);
+        };
     }, []);
 
     useEffect(() => {

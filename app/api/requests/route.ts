@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/src/prisma/db';
+import { requestsCache } from '@/src/request-cache';
 
 const requestsDB = db.orm.public.Request;
 
@@ -97,10 +98,12 @@ function validateBody(body: unknown): Result {
 
 export async function GET() {
     try {
-        const requests = await requestsDB
-            .where((r) => r.status.in(['pending', 'approved']))
-            .orderBy([(r) => r.upvotes.desc(), (r) => r.createdAt.asc()])
-            .all();
+        const requests = await requestsCache.get(async () =>
+            await requestsDB
+                .where((r) => r.status.in(['pending', 'approved']))
+                .orderBy([(r) => r.upvotes.desc(), (r) => r.createdAt.asc()])
+                .all()
+        );
 
         return NextResponse.json(requests);
     } catch (error) {
@@ -138,6 +141,7 @@ export async function POST(request: Request) {
             const updated = await requestsDB
                 .where({ id: existing.id })
                 .update({ upvotes: existing.upvotes + 1 });
+            requestsCache.invalidate();
             return NextResponse.json(updated, { status: 200 });
         }
 
@@ -150,6 +154,7 @@ export async function POST(request: Request) {
             message: input.message,
         });
 
+        requestsCache.invalidate();
         return NextResponse.json(newRequest, { status: 201 });
     } catch (error) {
         console.error(error);
