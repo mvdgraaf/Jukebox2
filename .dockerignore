@@ -1,0 +1,13 @@
+node_modules
+.next
+.git
+.idea
+.agents
+.claude
+.cursor
+.devin
+.env
+.env.*
+!.env.example
+Dockerfile
+docker-compose.yaml

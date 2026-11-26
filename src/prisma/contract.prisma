@@ -1,0 +1,14 @@
+// use prisma-8
+
+model Request {
+  id            String   @id @onCreate(cuid(2))
+  spotifyId     String
+  title         String
+  artist        String
+  albumArt      String?
+  requesterName String   @default("Anoniem")
+  message       String?
+  upvotes       Int      @default(1)
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+}
