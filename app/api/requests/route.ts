@@ -22,9 +22,31 @@ type ValidInput = {
 
 type Result = { ok: true; data: ValidInput } | { ok: false; error: string };
 
+
+const INVISIBLE = /[\p{C}\p{Zl}\p{Zp}\u115F\u1160\u2800\u3164\uFFA0]/gu;
+const MARK_STACK = /(\p{M}{2})\p{M}+/gu;
+
+const DISALLOWED_SCRIPTS = new RegExp(
+    '[^' +
+    [
+        'Latin', 'Cyrillic', 'Greek', 'Han', 'Hiragana', 'Katakana', 'Hangul',
+        'Arabic', 'Hebrew', 'Thai', 'Devanagari', 'Common', 'Inherited',
+    ]
+        .map((s) => `\\p{scx=${s}}`)
+        .join('') +
+    ']',
+    'gu'
+);
+
 function cleanString(value: unknown): string | null {
     if (typeof value !== 'string') return null;
-    return value.replace(CONTROL_CHARS, ' ').replace(/\s+/g, ' ').trim();
+    return value
+        .normalize('NFKC')
+        .replace(/\s+/g, ' ')
+        .replace(INVISIBLE, '')
+        .replace(DISALLOWED_SCRIPTS, '')
+        .replace(MARK_STACK, '$1')
+        .trim();
 }
 
 function validateBody(body: unknown): Result {
