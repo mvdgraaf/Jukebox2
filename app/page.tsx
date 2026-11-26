@@ -25,6 +25,9 @@ type SpotifyTrack = {
   albumArt: string | null;
 };
 
+// Houd deze limieten gelijk aan LIMITS in app/api/requests/route.ts
+const LIMITS = { title: 200, artist: 200, requesterName: 50, message: 140, search: 100 } as const;
+
 const css = `
 .dj-root{--night:#11131f;--panel:#1a1d2e;--line:#2d3149;--ink:#f1ede4;--muted:#9b9db5;--amber:#ffb340;--on-amber:#1c1303;--amber-soft:rgba(255,179,64,.14);--amber-line:rgba(255,179,64,.45);--mint:#5fd4a0;background:var(--night);color:var(--ink)}
 .dj-panel{background:var(--panel);border:1px solid var(--line)}
@@ -270,8 +273,11 @@ export default function GuestPage() {
         setManual(false);
         await fetchRequests();
       } else {
-        setFormError('Indienen lukt nu niet. Probeer het zo opnieuw.');
+        const err = await res.json().catch(() => null);
+        setFormError(err?.error ?? 'Indienen lukt nu niet. Probeer het zo opnieuw.');
       }
+    } catch {
+      setFormError('Geen verbinding. Probeer het zo opnieuw.');
     } finally {
       setSubmitting(false);
     }
@@ -342,6 +348,7 @@ export default function GuestPage() {
                     id="search"
                     type="text"
                     autoComplete="off"
+                    maxLength={LIMITS.search}
                     placeholder="Titel of artiest"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
@@ -433,6 +440,7 @@ export default function GuestPage() {
                               id="title"
                               type="text"
                               required
+                              maxLength={LIMITS.title}
                               placeholder="Bijv. Engelbewaarder"
                               value={title}
                               onChange={(e) => setTitle(e.target.value)}
@@ -447,6 +455,7 @@ export default function GuestPage() {
                               id="artist"
                               type="text"
                               required
+                              maxLength={LIMITS.artist}
                               placeholder="Bijv. Marco Schuitmaker"
                               value={artist}
                               onChange={(e) => setArtist(e.target.value)}
@@ -466,6 +475,7 @@ export default function GuestPage() {
                 <input
                     id="name"
                     type="text"
+                    maxLength={LIMITS.requesterName}
                     placeholder="Anoniem"
                     value={requesterName}
                     onChange={(e) => setRequesterName(e.target.value)}
@@ -479,11 +489,20 @@ export default function GuestPage() {
                 <input
                     id="message"
                     type="text"
+                    maxLength={LIMITS.message}
                     placeholder="Voor de jarige!"
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
                     className="dj-input w-full rounded-xl px-3.5 py-3 text-base"
                 />
+                {message.length >= LIMITS.message - 30 && (
+                    <p
+                        className="text-xs dj-muted mt-1 text-right tabular-nums"
+                        aria-live="polite"
+                    >
+                      {message.length}/{LIMITS.message}
+                    </p>
+                )}
               </div>
             </div>
 
