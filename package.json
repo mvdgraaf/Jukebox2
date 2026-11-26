@@ -10,7 +10,6 @@
     "contract:emit": "prisma contract emit"
   },
   "dependencies": {
-    "@prisma/client": "^7.10.1",
     "@prisma/orm-postgres": "^8.0.0-rc.24",
     "dotenv": "^18.0.10",
     "lucide-react": "^1.73.0",
